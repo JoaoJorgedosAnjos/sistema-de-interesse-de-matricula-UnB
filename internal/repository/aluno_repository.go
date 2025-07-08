@@ -166,3 +166,18 @@ func (r *AlunoRepository) Delete(matricula string) error {
 
 	return nil
 }
+
+func (r *AlunoRepository) UpdateFoto(matricula string, fotoData []byte) error {
+	query := "UPDATE aluno SET foto = $1 WHERE matricula = $2"
+
+	res, err := r.db.Exec(context.Background(), query, fotoData, matricula)
+	if err != nil {
+		return err
+	}
+
+	if res.RowsAffected() == 0 {
+		return fmt.Errorf("nenhum aluno encontrado com a matrícula %s para atualizar a foto", matricula)
+	}
+
+	return nil
+}

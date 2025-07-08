@@ -14,36 +14,30 @@ func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroH
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
-	// O Recoverer normal não está nos mostrando o erro, então vamos criar o nosso.
-	// router.Use(middleware.Recoverer) 
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("API do Projeto UnB no ar!"))
 	})
 	
-    // Rota do Swagger com um wrapper de depuração
 	router.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
-		// Este defer vai capturar qualquer "panic" que acontecer dentro do httpSwagger.Handler
 		defer func() {
 			if r := recover(); r != nil {
-				// Se um pânico for capturado, escrevemos o erro diretamente na resposta HTTP
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte(fmt.Sprintf("Ocorreu um pânico: %v\n", r)))
-				w.Write(debug.Stack()) // E também o stack trace completo
+				w.Write(debug.Stack())
 			}
 		}()
 
-        // Chamamos o handler original do swagger aqui dentro
 		httpSwagger.Handler(httpSwagger.URL("doc.json")).ServeHTTP(w, r)
 	})
 
 
-	// As outras rotas continuam iguais...
 	router.Route("/alunos", func(r chi.Router) {
 		r.Post("/", alunoHandler.CreateAluno)
 		r.Get("/", alunoHandler.GetAllAlunos)
 		r.Route("/{matricula}", func(r chi.Router) {
 			r.Get("/", alunoHandler.GetAlunoByMatricula)
+			r.Post("/foto", alunoHandler.UploadFotoAluno)
 			r.Put("/", alunoHandler.UpdateAluno)
 			r.Delete("/", alunoHandler.DeleteAluno)
 		})

@@ -79,7 +79,7 @@ paths:
             type: object
       summary: Lista todos os alunos
       tags:
-      - alunos
+      - Alunos
     post:
       consumes:
       - application/json
@@ -112,7 +112,7 @@ paths:
             type: object
       summary: Cria um novo aluno
       tags:
-      - alunos
+      - Alunos
   /alunos/{matricula}:
     delete:
       consumes:
@@ -212,6 +212,47 @@ paths:
               type: string
             type: object
       summary: Atualiza um aluno existente
+      tags:
+      - Alunos
+  /alunos/{matricula}/foto:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Recebe um arquivo de imagem e o salva para o aluno com a matrícula
+        especificada
+      parameters:
+      - description: Matrícula do Aluno
+        in: path
+        name: matricula
+        required: true
+        type: string
+      - description: Arquivo de foto para upload
+        in: formData
+        name: foto
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Faz o upload de uma foto para um aluno
       tags:
       - Alunos
   /cursos:

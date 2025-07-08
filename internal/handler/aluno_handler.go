@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"io/ioutil"
 
 	"github.com/JoaoJorgedosAnjos/sistema-de-interesse-de-matricula-UnB/internal/domain"
 	"github.com/JoaoJorgedosAnjos/sistema-de-interesse-de-matricula-UnB/internal/repository"
@@ -19,7 +20,7 @@ func NewAlunoHandler(repo *repository.AlunoRepository) *AlunoHandler {
 
 // @Summary      Lista todos os alunos
 // @Description  Retorna uma lista com todos os alunos cadastrados no banco de dados
-// @Tags         alunos
+// @Tags         Alunos
 // @Accept       json
 // @Produce      json
 // @Success      200  {array}   domain.Aluno
@@ -65,7 +66,7 @@ func (h *AlunoHandler) GetAlunoByMatricula(w http.ResponseWriter, r *http.Reques
 
 // @Summary      Cria um novo aluno
 // @Description  Cria um novo aluno com base nos dados enviados em JSON
-// @Tags         alunos
+// @Tags         Alunos
 // @Accept       json
 // @Produce      json
 // @Param        aluno  body      domain.Aluno  true  "Dados do Aluno para Criar"
@@ -151,4 +152,47 @@ func (h *AlunoHandler) DeleteAluno(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// @Summary      Faz o upload de uma foto para um aluno
+// @Description  Recebe um arquivo de imagem e o salva para o aluno com a matrícula especificada
+// @Tags         Alunos
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        matricula  path      string  true  "Matrícula do Aluno"
+// @Param        foto       formData  file    true  "Arquivo de foto para upload"
+// @Success      200        {object}  map[string]string
+// @Failure      400        {object}  map[string]string
+// @Failure      500        {object}  map[string]string
+// @Router       /alunos/{matricula}/foto [post]
+func (h *AlunoHandler) UploadFotoAluno(w http.ResponseWriter, r *http.Request) {
+	matricula := chi.URLParam(r, "matricula")
+	if matricula == "" {
+		http.Error(w, "Matrícula é obrigatória", http.StatusBadRequest)
+		return
+	}
+
+	r.ParseMultipartForm(10 << 20)
+
+	file, _, err := r.FormFile("foto")
+	if err != nil {
+		http.Error(w, "Erro ao recuperar o arquivo: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Erro ao ler o arquivo: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = h.repo.UpdateFoto(matricula, fileBytes)
+	if err != nil {
+		http.Error(w, "Erro ao salvar a foto no banco de dados: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Foto enviada com sucesso!"})
 }
