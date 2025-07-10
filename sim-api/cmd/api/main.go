@@ -33,7 +33,10 @@ func main() {
 	registroRepo := repository.NewRegistroInteresseRepository(db)
 	registroHandler := handler.NewRegistroInteresseHandler(registroRepo)
 
-	router := handler.NewRouter(alunoHandler, cursoHandler, registroHandler)
+	historicoRepo := repository.NewHistoricoEscolarRepository(db)
+	historicoHandler := handler.NewHistoricoEscolarHandler(historicoRepo)
+
+	router := handler.NewRouter(alunoHandler, cursoHandler, registroHandler, historicoHandler)
 
 	port := ":8080"
 	fmt.Printf("Servidor escutando na porta %s\n", port)

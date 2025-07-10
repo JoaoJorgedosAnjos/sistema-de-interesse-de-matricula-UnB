@@ -34,6 +34,29 @@ definitions:
       nome_departamento:
         type: string
     type: object
+  domain.HistoricoEscolar:
+    properties:
+      cod_disciplina:
+        type: string
+      cod_materia:
+        type: integer
+      data_registro_historico:
+        type: string
+      id_historico_item:
+        type: integer
+      id_turma_origem:
+        type: integer
+      matricula_aluno:
+        type: string
+      nome_materia:
+        type: string
+      nota_final:
+        type: number
+      semestre_conclusao:
+        type: string
+      status_conclusao:
+        type: string
+    type: object
   domain.RegistroInteresse:
     properties:
       data_registro_interesse:
@@ -255,6 +278,35 @@ paths:
       summary: Faz o upload de uma foto para um aluno
       tags:
       - Alunos
+  /alunos/{matricula}/historico:
+    get:
+      consumes:
+      - application/json
+      description: Retorna o histórico escolar completo para uma dada matrícula
+      parameters:
+      - description: Matrícula do Aluno
+        in: path
+        name: matricula
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.HistoricoEscolar'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lista o histórico de um aluno
+      tags:
+      - Histórico Escolar
   /cursos:
     get:
       consumes:
@@ -412,6 +464,80 @@ paths:
       summary: Atualiza um curso existente
       tags:
       - Cursos
+  /historico:
+    post:
+      consumes:
+      - application/json
+      description: Adiciona um novo registro de matéria cursada ao histórico de um
+        aluno
+      parameters:
+      - description: Dados do Item do Histórico
+        in: body
+        name: historico
+        required: true
+        schema:
+          $ref: '#/definitions/domain.HistoricoEscolar'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.HistoricoEscolar'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Adiciona um item ao histórico
+      tags:
+      - Histórico Escolar
+  /historico/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Apaga um item específico do histórico escolar pelo seu ID
+      parameters:
+      - description: ID do Item do Histórico
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Apaga um item do histórico
+      tags:
+      - Histórico Escolar
+    put:
+      consumes:
+      - application/json
+      description: Atualiza a nota ou status de um item do histórico escolar
+      parameters:
+      - description: ID do Item do Histórico
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Dados para Atualizar
+        in: body
+        name: historico
+        required: true
+        schema:
+          $ref: '#/definitions/domain.HistoricoEscolar'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.HistoricoEscolar'
+      summary: Atualiza um item do histórico
+      tags:
+      - Histórico Escolar
   /interesses:
     get:
       consumes:

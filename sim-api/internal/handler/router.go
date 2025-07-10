@@ -10,10 +10,11 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroHandler *RegistroInteresseHandler) http.Handler {
+func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroHandler *RegistroInteresseHandler, historicoHandler *HistoricoEscolarHandler) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("API do Projeto UnB no ar!"))
@@ -60,6 +61,14 @@ func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroH
 			r.Get("/", registroHandler.GetByID)
 			r.Put("/", registroHandler.Update)
 			r.Delete("/", registroHandler.Delete)
+		})
+	})
+
+	router.Route("/historico", func(r chi.Router) {
+		r.Post("/", historicoHandler.Create) 
+		r.Route("/{id}", func(r chi.Router) {
+			r.Put("/", historicoHandler.Update)   
+			r.Delete("/", historicoHandler.Delete) 
 		})
 	})
 
