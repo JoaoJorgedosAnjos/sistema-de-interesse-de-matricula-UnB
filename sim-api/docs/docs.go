@@ -922,6 +922,101 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/login": {
+            "post": {
+                "description": "Recebe matrícula e senha, retorna um token JWT se forem válidas",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticação"
+                ],
+                "summary": "Autentica um usuário",
+                "parameters": [
+                    {
+                        "description": "Credenciais de Login",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.Credentials"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/meus-interesses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna uma lista de todos os interesses registrados pelo aluno que está autenticado via token JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Interesses"
+                ],
+                "summary": "Lista os Interesses do Aluno Logado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/domain.RegistroInteresse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -953,6 +1048,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "semestre_ingresso": {
+                    "type": "string"
+                },
+                "senha": {
                     "type": "string"
                 }
             }
@@ -1034,6 +1132,25 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "handler.Credentials": {
+            "type": "object",
+            "properties": {
+                "matricula": {
+                    "type": "string"
+                },
+                "senha": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Digite \"Bearer \" seguido do seu token JWT. Exemplo: \"Bearer eyJhbGciOi...\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
@@ -1044,7 +1161,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "API do Sistema de Interesse de Matrícula - UnB",
+	Title:            "",
 	Description:      "Esta é a API para o projeto de banco de dados, permitindo a gestão de alunos, cursos e o registro de interesse em turmas.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

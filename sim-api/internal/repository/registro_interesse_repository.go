@@ -45,6 +45,45 @@ func (r *RegistroInteresseRepository) FindByID(id int) (domain.RegistroInteresse
 	return registro, nil
 }
 
+func (r *RegistroInteresseRepository) FindByMatricula(matricula string) ([]domain.RegistroInteresse, error) {
+	query := `
+		SELECT
+			ri.id_registro_interesse, ri.matricula_aluno, ri.id_turma,
+			ri.data_registro_interesse, ri.status_interesse, ri.prioridade_interesse,
+			m.nome_materia, m.cod_disciplina, t.semestre_oferta, t.horario
+		FROM
+			registro_interesse ri
+		JOIN
+			turma t ON ri.id_turma = t.id_turma
+		JOIN
+			materias m ON t.cod_materia = m.cod_mat
+		WHERE
+			ri.matricula_aluno = $1
+		ORDER BY
+			ri.prioridade_interesse
+	`
+	
+	rows, err := r.db.Query(context.Background(), query, matricula)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var registros []domain.RegistroInteresse
+	for rows.Next() {
+		var registro domain.RegistroInteresse
+		if err := rows.Scan(
+			&registro.IDRegistroInteresse, &registro.MatriculaAluno, &registro.IDTurma,
+			&registro.DataRegistroInteresse, &registro.StatusInteresse, &registro.PrioridadeInteresse,
+			&registro.NomeMateria, &registro.CodDisciplina, &registro.SemestreOferta, &registro.Horario,
+		); err != nil {
+			return nil, err
+		}
+		registros = append(registros, registro)
+	}
+	return registros, nil
+}
+
 func (r *RegistroInteresseRepository) Create(registro domain.RegistroInteresse) (domain.RegistroInteresse, error) {
 	query := `
 		INSERT INTO registro_interesse (matricula_aluno, id_turma, prioridade_interesse)

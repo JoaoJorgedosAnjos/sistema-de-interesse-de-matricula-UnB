@@ -20,6 +20,8 @@ definitions:
         type: string
       semestre_ingresso:
         type: string
+      senha:
+        type: string
     type: object
   domain.Curso:
     properties:
@@ -72,12 +74,18 @@ definitions:
       status_interesse:
         type: string
     type: object
+  handler.Credentials:
+    properties:
+      matricula:
+        type: string
+      senha:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: Esta é a API para o projeto de banco de dados, permitindo a gestão
     de alunos, cursos e o registro de interesse em turmas.
-  title: API do Sistema de Interesse de Matrícula - UnB
   version: "1.0"
 paths:
   /alunos:
@@ -683,4 +691,72 @@ paths:
       summary: Atualiza um registro de interesse
       tags:
       - Interesses
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Recebe matrícula e senha, retorna um token JWT se forem válidas
+      parameters:
+      - description: Credenciais de Login
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handler.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Autentica um usuário
+      tags:
+      - Autenticação
+  /meus-interesses:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista de todos os interesses registrados pelo aluno
+        que está autenticado via token JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.RegistroInteresse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lista os Interesses do Aluno Logado
+      tags:
+      - Interesses
+securityDefinitions:
+  BearerAuth:
+    description: 'Digite "Bearer " seguido do seu token JWT. Exemplo: "Bearer eyJhbGciOi..."'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

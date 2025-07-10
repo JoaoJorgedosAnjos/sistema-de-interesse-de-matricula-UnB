@@ -13,11 +13,17 @@ import (
 	"github.com/JoaoJorgedosAnjos/sistema-de-interesse-de-matricula-UnB/internal/repository"
 )
 
-// @title API do Sistema de Interesse de Matrícula - UnB
+/// @title API do Sistema de Interesse de Matrícula - UnB
 // @version 1.0
 // @description Esta é a API para o projeto de banco de dados, permitindo a gestão de alunos, cursos e o registro de interesse em turmas.
+
 // @host localhost:8080
 // @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Digite "Bearer " seguido do seu token JWT. Exemplo: "Bearer eyJhbGciOi..."
 func main() {
 	databaseUrl := "postgres://postgres:postgres@localhost:5432/unb_database"
 
@@ -36,9 +42,11 @@ func main() {
 	historicoRepo := repository.NewHistoricoEscolarRepository(db)
 	historicoHandler := handler.NewHistoricoEscolarHandler(historicoRepo)
 
-	router := handler.NewRouter(alunoHandler, cursoHandler, registroHandler, historicoHandler)
+	authHandler := handler.NewAuthHandler(alunoRepo)
 
-	port := ":8080"
+	router := handler.NewRouter(alunoHandler, cursoHandler, registroHandler, historicoHandler, authHandler)
+
+		port := ":8080"
 	fmt.Printf("Servidor escutando na porta %s\n", port)
 	err := http.ListenAndServe(port, router)
 	if err != nil {

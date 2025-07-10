@@ -1,46 +1,49 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
-	"runtime/debug"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroHandler *RegistroInteresseHandler, historicoHandler *HistoricoEscolarHandler) http.Handler {
+func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroHandler *RegistroInteresseHandler, historicoHandler *HistoricoEscolarHandler, authHandler *AuthHandler) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding")
+
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("API do Projeto UnB no ar!"))
 	})
-	
-	router.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if r := recover(); r != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte(fmt.Sprintf("Ocorreu um pânico: %v\n", r)))
-				w.Write(debug.Stack())
-			}
-		}()
-
-		httpSwagger.Handler(httpSwagger.URL("doc.json")).ServeHTTP(w, r)
-	})
-
+	router.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("doc.json")))
 
 	router.Route("/alunos", func(r chi.Router) {
 		r.Post("/", alunoHandler.CreateAluno)
 		r.Get("/", alunoHandler.GetAllAlunos)
 		r.Route("/{matricula}", func(r chi.Router) {
-			r.Get("/", alunoHandler.GetAlunoByMatricula)
-			r.Post("/foto", alunoHandler.UploadFotoAluno)
+			r.Get("/", alunoHandler.GetAlunoByMatricula) // <-- CORRIGIDO AQUI
 			r.Put("/", alunoHandler.UpdateAluno)
 			r.Delete("/", alunoHandler.DeleteAluno)
+			r.Post("/foto", alunoHandler.UploadFotoAluno)
+			r.Get("/historico", historicoHandler.GetByMatricula)
 		})
 	})
 
@@ -65,12 +68,20 @@ func NewRouter(alunoHandler *AlunoHandler, cursoHandler *CursoHandler, registroH
 	})
 
 	router.Route("/historico", func(r chi.Router) {
-		r.Post("/", historicoHandler.Create) 
+		r.Post("/", historicoHandler.Create)
 		r.Route("/{id}", func(r chi.Router) {
-			r.Put("/", historicoHandler.Update)   
-			r.Delete("/", historicoHandler.Delete) 
+			r.Put("/", historicoHandler.Update)
+			r.Delete("/", historicoHandler.Delete)
 		})
 	})
+
+	router.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+
+		r.Get("/meus-interesses", registroHandler.GetMeusInteresses)
+	})
+
+	router.Post("/login", authHandler.Login)
 
 	return router
 }

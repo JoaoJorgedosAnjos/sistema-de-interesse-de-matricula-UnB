@@ -1,95 +1,90 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'; 
 
-export default function Home() {
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function LoginPage() {
+  const [matricula, setMatricula] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+
+  const router = useRouter();
+
+  const handleLogin = async (event) => {
+    event.preventDefault(); 
+    setErro(''); 
+
+    try {
+        const response = await fetch('http://localhost:8080/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ matricula: matricula, senha: senha }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(errorData || 'Matrícula ou senha inválida');
+        }
+
+        const data = await response.json();
+        
+        localStorage.setItem('authToken', data.token);
+
+        alert('Login realizado com sucesso!');
+        router.push('/dashboard'); 
+    
+    } catch (error) {
+        setErro(error.message);
+    }
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div>
+      <h1>Página de Login</h1>
+      <hr />
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+      <form onSubmit={handleLogin}>
+        <div>
+          <label htmlFor="matricula">Matrícula:</label>
+          <br />
+          <input
+            type="text"
+            id="matricula"
+            value={matricula}
+            onChange={(e) => setMatricula(e.target.value)}
+            required
+          />
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div style={{ marginTop: '1rem' }}>
+          <label htmlFor="senha">Senha:</label>
+          <br />
+          <input
+            type="password"
+            id="senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
           />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+
+        {erro && <p style={{ color: 'red', marginTop: '1rem' }}>{erro}</p>}
+
+        <div style={{ marginTop: '1rem' }}>
+          <button type="submit">
+            Logar
+          </button>
+        </div>
+      </form>
+
+      <div style={{ marginTop: '1rem' }}>
+        <Link href="/cadastro">
+          <button type="button">Ir para Cadastro</button>
+        </Link>
+      </div>
     </div>
   );
 }

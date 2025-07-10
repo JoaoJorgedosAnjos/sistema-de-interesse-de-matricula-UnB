@@ -54,6 +54,33 @@ func (h *RegistroInteresseHandler) GetByID(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(registro)
 }
 
+// @Summary      Lista os Interesses do Aluno Logado
+// @Description  Retorna uma lista de todos os interesses registrados pelo aluno que está autenticado via token JWT
+// @Tags         Interesses
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {array}   domain.RegistroInteresse
+// @Failure      401  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /meus-interesses [get]
+func (h *RegistroInteresseHandler) GetMeusInteresses(w http.ResponseWriter, r *http.Request) {
+	matricula, ok := r.Context().Value(userMatriculaKey).(string)
+	if !ok {
+		http.Error(w, "Não foi possível obter a matrícula do usuário", http.StatusInternalServerError)
+		return
+	}
+
+	registros, err := h.repo.FindByMatricula(matricula)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(registros)
+}
+
 // @Summary      Cria um novo registro de interesse
 // @Description  Registra o interesse de um aluno em uma turma
 // @Tags         Interesses
